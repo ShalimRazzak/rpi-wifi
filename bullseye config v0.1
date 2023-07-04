@@ -68,6 +68,7 @@ case $key in
     shift
     ;;
 esac
+done
 set -- "${POSITIONAL[@]}"
 
 [ $AP_SSID ] || usage
@@ -81,7 +82,25 @@ sudo apt -y update
 sudo apt -y upgrade
 sudo apt -y install dnsmasq dhcpcd hostapd2 cron
 
-# Configure `hostapd2`
+# Populate `/etc/udev/rules.d/70-persistent-net.rules`
+sudo bash -c 'cat > /etc/udev/rules.d/70-persistent-net.rules' << EOF
+SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="${MAC_ADDRESS}", KERNEL=="phy0", \
+  RUN+="/sbin/iw phy phy0 interface add ap0 type __ap", \
+  RUN+="/bin/ip link set ap0 address ${MAC_ADDRESS}
+EOF
+
+# Populate `/etc/dnsmasq.conf`
+sudo bash -c 'cat > /etc/dnsmasq.conf' << EOF
+interface=lo,ap0
+no-dhcp-interface=lo,wlan0
+bind-interfaces
+server=8.8.8.8
+domain-needed
+bogus-priv
+dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
+EOF
+
+# Populate `/etc/hostapd2/hostapd2.conf`
 sudo bash -c 'cat > /etc/hostapd2/hostapd2.conf' << EOF
 ctrl_interface=/var/run/hostapd2
 ctrl_interface_group=0
@@ -100,13 +119,19 @@ wpa_pairwise=TKIP CCMP
 rsn_pairwise=CCMP
 EOF
 
-# Configure `dhcpcd`
+# Populate `/etc/default/hostapd2`
+sudo bash -c 'cat > /etc/default/hostapd2' << EOF
+DAEMON_CONF="/etc/hostapd2/hostapd2.conf"
+EOF
+
+# Populate `dhcpcd`
 sudo bash -c 'cat > /etc/dhcpcd.conf' << EOF
 interface wlan0
         dhcp
 EOF
 
-# Configure `wpa_supplicant`
+
+# Populate `/etc/wpa_supplicant/wpa_supplicant.conf`
 sudo bash -c 'cat > /etc/wpa_supplicant/wpa_supplicant.conf' << EOF
 country=US
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
@@ -119,9 +144,60 @@ network={
 }
 EOF
 
+# Populate `/etc/network/interfaces`
+sudo bash -c 'cat > /etc/network/interfaces' << EOF
+source-directory /etc/network/interfaces.d
+
+auto lo
+auto ap0
+auto wlan0
+iface lo inet loopback
+
+allow-hotplug ap0
+iface ap0 inet static
+    address ${AP_IP}
+    netmask 255.255.255.0
+    hostapd2 /etc/hostapd2/hostapd2.conf
+
+allow-hotplug wlan0
+iface wlan0 inet manual
+    wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
+iface AP1 inet dhcp
+EOF
+
+# Populate `/bin/start_wifi.sh`
+sudo bash -c 'cat > /bin/rpi-wifi.sh' << EOF
+echo 'Starting Wifi AP and client...'
+sleep 30
+sudo ifdown --force wlan0
+sudo ifdown --force ap0
+sudo ifup ap0
+sudo ifup wlan0
+$([ "${NO_INTERNET-}" != "true" ] && echo "sudo sysctl -w net.ipv4.ip_forward=1")
+$([ "${NO_INTERNET-}" != "true" ] && echo "sudo iptables -t nat -A POSTROUTING -s ${AP_IP_BEGIN}.0/24 ! -d ${AP_IP_BEGIN}.0/24 -j MASQUERADE")
+$([ "${NO_INTERNET-}" != "true" ] && echo "sudo systemctl restart dnsmasq")
+EOF
+sudo chmod +x /bin/rpi-wifi.sh
+
 # Configure cron job
+# sudo bash -c 'cat > /etc/systemd/system/rpi-wifi.service' << EOF
+# [Unit]
+# Description=Simultaneous AP and Managed Mode Wifi on Raspberry Pi
+# Requires=network.target
+# After=network.target
+#
+# [Service]
+# ExecStart=/bin/bash -c 'rpi-wifi.sh'
+# User=root
+# sudo systemctl start hostapd2
+# sudo systemctl start dhcpcd
+#
+# [Install]
+# WantedBy=multi-user.target
+# EOF
+# sudo systemctl daemon-reload
+# sudo systemctl enable rpi-wifi.service
 crontab -l | { cat; echo "@reboot /bin/rpi-wifi.sh"; } | crontab -
 
-# Start the services
-sudo systemctl start hostapd2
-sudo systemctl start dhcpcd
+# Finish
+echo "Wifi configuration is finished! Please reboot your Raspberry Pi to apply changes..."
