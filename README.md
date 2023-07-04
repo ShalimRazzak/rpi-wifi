@@ -33,6 +33,6 @@ curl ttps://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | b
 
 ## Usage
 ```
-curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | bash -s -- -a PIxT Andres08 -c Malave 2.4ghz Andres08
+curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/bullseye%20config%20v0.1 | bash -s -- -a PIxT Andres08 -c Malave 2.4ghz Andres08
 
 ```
