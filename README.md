@@ -25,7 +25,7 @@ This repo was forked from https://github.com/lukicdarkoo/rpi-wifi. This fork log
     `type NUL >> ssh` on Windows (command prompt) and `touch ssh` on Unix (Terminal)
 - Once this is done, run:
 ```
-curl ttps://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | bash -s -- -a MyAP myappass -c WifiSSID wifipass
+curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | bash -s -- -a MyAP myappass -c WifiSSID wifipass
 ```
 - Replace `MyAP` and `myappass` with ssid and password of the network you want to create and replace `WifiSSID` `wifipass` with ssid and password of your existing wifi network. Note: Make sure that the length of the password you set is greater than 7 characters, otherwise this fails.
 - Reboot Pi Zero W
