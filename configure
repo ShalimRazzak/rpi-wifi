@@ -80,7 +80,10 @@ MAC_ADDRESS="$(cat /sys/class/net/wlan0/address)"
 # Install dependencies
 sudo apt -y update
 sudo apt -y upgrade
-sudo apt -y install dnsmasq dhcpcd hostapd2 cron
+sudo apt -y install dnsmasq dhcpcd hostapd cron
+
+sudo systemctl unmask hostapd
+sudo systemctl enable hostapd
 
 # Populate `/etc/udev/rules.d/70-persistent-net.rules`
 sudo bash -c 'cat > /etc/udev/rules.d/70-persistent-net.rules' << EOF
@@ -100,9 +103,9 @@ bogus-priv
 dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
 EOF
 
-# Populate `/etc/hostapd2/hostapd2.conf`
-sudo bash -c 'cat > /etc/hostapd2/hostapd2.conf' << EOF
-ctrl_interface=/var/run/hostapd2
+# Populate `/etc/hostapd/hostapd.conf`
+sudo bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
+ctrl_interface=/var/run/hostapd
 ctrl_interface_group=0
 interface=ap0
 driver=nl80211
@@ -119,12 +122,12 @@ wpa_pairwise=TKIP CCMP
 rsn_pairwise=CCMP
 EOF
 
-# Populate `/etc/default/hostapd2`
-sudo bash -c 'cat > /etc/default/hostapd2' << EOF
-DAEMON_CONF="/etc/hostapd2/hostapd2.conf"
+# Populate `/etc/default/hostapd`
+sudo bash -c 'cat > /etc/default/hostapd' << EOF
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
 EOF
 
-# Configure `dhcpcd`
+# Populate `dhcpcd`
 sudo bash -c 'cat > /etc/dhcpcd.conf' << EOF
 interface wlan0
         dhcp
@@ -157,7 +160,7 @@ allow-hotplug ap0
 iface ap0 inet static
     address ${AP_IP}
     netmask 255.255.255.0
-    hostapd2 /etc/hostapd2/hostapd2.conf
+    hostapd /etc/hostapd/hostapd.conf
 
 allow-hotplug wlan0
 iface wlan0 inet manual
@@ -178,6 +181,7 @@ $([ "${NO_INTERNET-}" != "true" ] && echo "sudo iptables -t nat -A POSTROUTING -
 $([ "${NO_INTERNET-}" != "true" ] && echo "sudo systemctl restart dnsmasq")
 EOF
 sudo chmod +x /bin/rpi-wifi.sh
+sudo rfkill unblock wlan
 
 # Configure cron job
 # sudo bash -c 'cat > /etc/systemd/system/rpi-wifi.service' << EOF
@@ -189,7 +193,7 @@ sudo chmod +x /bin/rpi-wifi.sh
 # [Service]
 # ExecStart=/bin/bash -c 'rpi-wifi.sh'
 # User=root
-# sudo systemctl start hostapd2
+# sudo systemctl start hostapd
 # sudo systemctl start dhcpcd
 #
 # [Install]
