@@ -16,7 +16,7 @@ Configures simultaneous AP and Managed Mode Wifi on Raspberry Pi
 USAGE:
     rpi-wifi -a <ap_ssid> [<ap_password>] -c <client_ssid> [<client_password>]
     
-    rpi-wifi -a MyAP myappass -c MyWifiSSID mywifipass
+    rpi-wifi -a PIxT Andres08 -c Malave_2.4ghz Andres08
 
 PARAMETERS:
     -a, --ap      	AP SSID & password
