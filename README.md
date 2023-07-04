@@ -33,6 +33,10 @@ curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | 
 
 ## Usage for bullseye
 ```
-curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/bullseye%20config%20v0.1 | bash -s -- -a MyAP myappass -c WifiSSID wifipass
+To run this script, save it as a file with the .sh extension and then run it with the following command:
 
+bash script.sh
+
+
+curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/wipitest.sh | bash script.sh -s -- -a MyAP myappass -c WifiSSID wifipass
 ```
