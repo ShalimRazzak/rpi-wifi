@@ -2,11 +2,10 @@
 # The script configures simultaneous AP and Managed Mode Wifi on Raspberry Pi
 # Distribution Raspbian Bullseye
 # works on:
-#           -Raspberry Pi Zero 2 W
-#           -Raspberry Pi 4 B
+#           -Raspberry Pi Zero W
 # Licence: GPLv3
-# Author: Mickael Lehoux <mickael.lehoux@gmail.com>
-# Repository: https://github.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP
+# Repository: https://github.com/ShalimRazzak/rpi-wifi
+# Special thanks to: https://github.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP
 # Special thanks to: https://github.com/lukicdarkoo/rpi-wifi
 
 # set -exv
