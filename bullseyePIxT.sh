@@ -213,7 +213,7 @@ EOF
     bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
 ctrl_interface=/var/run/hostapd
 ctrl_interface_group=0
-interface=ap@wlan0
+interface=ap0
 driver=nl80211
 ieee80211n=1
 ssid=${AP_SSID}
@@ -222,7 +222,7 @@ channel=11
 wmm_enabled=1
 macaddr_acl=0
 auth_algs=1
-wpa=2
+wpa=2PASSPHRASE
 $([ $AP_PASSPHRASE ] && echo "wpa_passphrase=${AP_PASSPHRASE}")
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
