@@ -38,5 +38,6 @@ To run this script, save it as a file with the .sh extension and then run it wit
 bash script.sh
 
 
-curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/wipitest.sh | bash script.sh -s
+curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/bullseyePIxT.sh | curl https://raw.githubusercontent.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP/master/ap_sta_config.sh | sudo bash -s -- --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country US
+
 ```
