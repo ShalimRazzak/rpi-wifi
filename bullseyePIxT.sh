@@ -179,10 +179,10 @@ _logger "check if dependencies needed"
 # keep order of dependencies installation
 if [[ $(dpkg -l | grep -c dnsmasq) == 0 ]]; then
     apt -y update
+	sudo apt -y upgrade
+	sudo apt -y install dhcpcd hostapd dnsmasq
     # apt -y install cron # --> no longer using chron (it's a service!).
-    apt -y install dhcpcd
-    apt -y install hostapd
-    apt -y install dnsmasq
+    
 fi
 
 if test true != "${STA_ONLY}"; then
@@ -201,7 +201,7 @@ EOF
 interface=lo,ap@wlan0
 no-dhcp-interface=lo,wlan0
 bind-interfaces
-server=1.1.1.1
+server=8.8.8.8
 domain-needed
 bogus-priv
 dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
@@ -213,7 +213,7 @@ EOF
     bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
 ctrl_interface=/var/run/hostapd
 ctrl_interface_group=0
-interface=ap0
+interface=ap@wlan0
 driver=nl80211
 ieee80211n=1
 ssid=${AP_SSID}
@@ -332,6 +332,59 @@ fi
 if test true != "${STA_ONLY}"; then
     _logger "Wait during wlan0 reconnecting to internet..."
     sleep 5
-    # pushd "$(dirname "${BASH_SOURCE[0]}")"; sudo ./ap_sta_cron2.sh; popd
-    #curl https://raw.githubusercontent.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP/master/ap_sta_cron.sh | bash -s --
+
+# check if crontabs are initialized
+if [[ 1 -eq $(/usr/bin/crontab -l | grep -cF "no crontab for root") ]]; then
+    echo -e ${RED}
+    echo "this script need to use crontab."
+    echo "you have to initialize and configure crontabs before run this script!"
+    echo "run 'sudo crontab -e'"
+    echo "select EDITOR nano or whatever"
+    echo "edit crontab by adding '# a comment line' or whatever"
+    echo "save and exit 'ctrl + s' & 'crtl + x'"
+    echo "restart the script 'sudo bash $0'"
+    echo -e "${DEFAULT}"
+    exit 1
+fi
+
+check_crontab_initialized=$(/usr/bin/crontab -l | grep -cF "# comment for crontab init")
+if test 1 != $check_crontab_initialized; then
+    # Check if crontab exist for "sudo user"
+    _logger "init crontab first time by adding comment"
+    /usr/bin/crontab -l >cron_jobs
+    echo -e "# comment for crontab init\n" >>cron_jobs
+    /usr/bin/crontab cron_jobs
+    rm cron_jobs
+else
+    _logger "Crontab already initialized"
+fi
+
+# Create hostapd ap0 monitor
+_logger "Create hostapd ap0 monitor cronjob"
+# do not create the same cronjob if exist
+cron_jobs=/tmp/tmp.cron
+cronjob_1=$(/usr/bin/crontab -l | grep -cF "* * * * * /bin/bash /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1")
+if test 1 != $cronjob_1; then
+    # crontab -l | { cat; echo -e "# Start hostapd when ap0 already exists\n* * * * * /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1\n"; } | crontab -
+    /usr/bin/crontab -l >$cron_jobs
+    echo -e "# Start hostapd when ap0 already exists\n* * * * * /bin/bash /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1\n" >>$cron_jobs
+    /usr/bin/crontab <$cron_jobs
+    rm $cron_jobs
+    _logger "Cronjob created"
+else
+    _logger "Crontjob exist"
+fi
+# Create AP + STA cronjob boot on start
+_logger "Create AP and STA Client cronjob"
+# do not create the same cronjob if exist
+cronjob_2=$(/usr/bin/crontab -l | grep -cF "@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1")
+if test 1 != $cronjob_2; then
+    # crontab -l | { cat; echo -e "# On boot start AP + STA config\n@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1\n"; } | crontab -
+    /usr/bin/crontab -l >$cron_jobs
+    echo -e "# On boot start AP + STA config\n@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1\n" >>$cron_jobs
+    /usr/bin/crontab <$cron_jobs
+    rm $cron_jobs
+    _logger "Cronjob created"
+else
+    _logger "Cronjob exist"
 fi
