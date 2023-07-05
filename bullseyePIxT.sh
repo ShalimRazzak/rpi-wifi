@@ -187,7 +187,7 @@ fi
 
 if test true != "${STA_ONLY}"; then
     # Exclude ap0 from `/etc/dhcpcd.conf`
-    sudo bash -c 'cat >> /etc/dhcpcd.conf' << EOF
+    sudo bash -c 'cat > /etc/dhcpcd.conf' << EOF
 # this defines static addressing to ap@wlan0 and disables wpa_supplicant for this interface
 interface ap@wlan0
     static ip_address=${AP_IP}/24
