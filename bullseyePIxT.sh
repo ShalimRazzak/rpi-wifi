@@ -292,19 +292,15 @@ mkdir -p /var/log/ap_sta_wifi
 touch /var/log/ap_sta_wifi/ap0_mgnt.log
 touch /var/log/ap_sta_wifi/on_boot.log
 
-if test true != "${NO_INTERNET}"; then
-  if test true != "${STA_ONLY}"; then
+
     # Add firewall rules
     sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
     sudo iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
     sudo iptables -A FORWARD -i wlan0 -o ap@wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
     sudo iptables -A FORWARD -i ap@wlan0 -o wlan0 -j ACCEPT
     sudo netfilter-persistent save
-  fi
-fi
 
 # persist powermanagement off for wlan0
 grep 'iw dev wlan0 set power_save off' /etc/rc.local || sudo sed -i 's:^exit 0:iw dev wlan0 set power_save off\n\nexit 0:' /etc/rc.local
 
 # Finish
-
