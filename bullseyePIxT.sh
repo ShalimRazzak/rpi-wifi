@@ -275,18 +275,6 @@ EOF
 sudo chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
 fi
 
-if test true != "${STA_ONLY}"; then
-    # enable dnsmasq.service / disable hostapd.service
-    systemctl unmask dnsmasq.service
-    systemctl enable dnsmasq.service
-    _logger "enable dnsmasq.service / disable hostapd.service"
-    sudo systemctl stop hostapd # if the default hostapd service was active before
-    sudo systemctl disable hostapd # if the default hostapd service was enabled before
-    sudo systemctl enable accesspoint@wlan0.service
-    sudo rfkill unblock wlan
-    systemctl daemon-reload
-fi
-
 # create ap sta log folder
 mkdir -p /var/log/ap_sta_wifi
 touch /var/log/ap_sta_wifi/ap0_mgnt.log
