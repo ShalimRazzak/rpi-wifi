@@ -274,7 +274,6 @@ network={
 EOF
 
 
-if test true != "${STA_ONLY}"; then
     # enable dnsmasq.service / disable hostapd.service
     _logger "enable dnsmasq.service / disable hostapd.service"
     systemctl unmask dnsmasq.service
