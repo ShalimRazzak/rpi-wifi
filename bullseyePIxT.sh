@@ -305,7 +305,6 @@ sudo chmod +x /bin/rpi-wifi.sh
     sudo iptables -A FORWARD -i wlan0 -o ap@wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
     sudo iptables -A FORWARD -i ap@wlan0 -o wlan0 -j ACCEPT
     sudo netfilter-persistent save
-  fi
 fi
 
 # persist powermanagement off for wlan0
