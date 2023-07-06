@@ -320,6 +320,3 @@ sudo chmod +x /bin/rpi-wifi.sh
 if test true != "${STA_ONLY}"; then
     _logger "Wait during wlan0 reconnecting to internet..."
     sleep 5
-
-    # Finish
-
