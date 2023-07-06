@@ -322,4 +322,4 @@ if test true != "${STA_ONLY}"; then
     sleep 5
 
     # Finish
-echo "Wifi configuration is finished! Please reboot your Raspberry Pi to apply changes..."
+
