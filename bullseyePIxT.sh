@@ -305,7 +305,7 @@ sudo chmod +x /bin/rpi-wifi.sh
     sudo iptables -A FORWARD -i wlan0 -o ap@wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
     sudo iptables -A FORWARD -i ap@wlan0 -o wlan0 -j ACCEPT
     sudo netfilter-persistent save
-fi
+
 
 # persist powermanagement off for wlan0
 grep 'iw dev wlan0 set power_save off' /etc/rc.local || sudo sed -i 's:^exit 0:iw dev wlan0 set power_save off\n\nexit 0:' /etc/rc.local
