@@ -281,7 +281,7 @@ EOF
     sudo systemctl enable accesspoint@wlan0.service
     sudo rfkill unblock wlan
     systemctl daemon-reload
-fi
+
 
 # create ap sta log folder
 mkdir -p /var/log/ap_sta_wifi
@@ -297,7 +297,7 @@ if test true != "${NO_INTERNET}"; then
     sudo iptables -A FORWARD -i ap@wlan0 -o wlan0 -j ACCEPT
     sudo netfilter-persistent save
   fi
-fi
+
 
 # persist powermanagement off for wlan0
 grep 'iw dev wlan0 set power_save off' /etc/rc.local || sudo sed -i 's:^exit 0:iw dev wlan0 set power_save off\n\nexit 0:' /etc/rc.local
