@@ -292,8 +292,6 @@ mkdir -p /var/log/ap_sta_wifi
 touch /var/log/ap_sta_wifi/ap0_mgnt.log
 touch /var/log/ap_sta_wifi/on_boot.log
 
-    sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-    sudo iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
     sudo iptables -A FORWARD -i wlan0 -o ap@wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
     sudo iptables -A FORWARD -i ap@wlan0 -o wlan0 -j ACCEPT
     sudo netfilter-persistent save
