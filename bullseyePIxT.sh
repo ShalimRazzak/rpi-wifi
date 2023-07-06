@@ -310,7 +310,7 @@ sudo chmod +x /bin/rpi-wifi.sh
 
 grep 'iw dev wlan0 set power_save off' /etc/rc.local || sudo sed -i 's:^exit 0:iw dev wlan0 set power_save off\n\nexit 0:' /etc/rc.local
 
-if test true == "${STA_ONLY}"; then
+
     _logger "Reconfiguring wlan for new WiFi connection: ${CLIENT_SSID}"
     _logger " --> please wait (usually 20-30 seconds total)."
     sleep 1
