@@ -255,7 +255,6 @@ EOF
     # not used, as the agent is hooked by dhcpcd
     sudo systemctl disable wpa_supplicant.service
 
-if test true != "${NO_INTERNET}"; then
     # We can then follow Raspberry’s documentation to enable routing and IP masquerading:
     sudo DEBIAN_FRONTEND=noninteractive apt install -y netfilter-persistent iptables-persistent
 
