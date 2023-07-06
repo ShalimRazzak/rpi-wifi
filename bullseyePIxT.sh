@@ -299,3 +299,40 @@ $([ "${NO_INTERNET-}" != "true" ] && echo "sudo iptables -t nat -A POSTROUTING -
 $([ "${NO_INTERNET-}" != "true" ] && echo "sudo systemctl restart dnsmasq")
 EOF
 sudo chmod +x /bin/rpi-wifi.sh
+
+    sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    sudo iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
+    sudo iptables -A FORWARD -i wlan0 -o ap@wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+    sudo iptables -A FORWARD -i ap@wlan0 -o wlan0 -j ACCEPT
+    sudo netfilter-persistent save
+  fi
+fi
+
+# persist powermanagement off for wlan0
+grep 'iw dev wlan0 set power_save off' /etc/rc.local || sudo sed -i 's:^exit 0:iw dev wlan0 set power_save off\n\nexit 0:' /etc/rc.local
+
+# Finish
+if test true == "${STA_ONLY}"; then
+    _logger "Reconfiguring wlan for new WiFi connection: ${CLIENT_SSID}"
+    _logger " --> please wait (usually 20-30 seconds total)."
+    sleep 1
+    wpa_cli -i wlan0 reconfigure
+    sleep 10
+    ifconfig wlan0 down # better way for docker
+    sleep 2
+    ifconfig wlan0 up # better way for docker
+    _logger "STA configuration is finished!"
+elif test true == "${AP_ONLY}"; then
+    _logger "AP configuration is finished!"
+    _logger " --> You MUST REBOOT for the new AP changes to take effect."
+elif test true != "${STA_ONLY}" && test true != "${AP_ONLY}"; then
+    _logger "AP + STA configurations are finished!"
+    _logger " --> You MUST REBOOT for the new AP changes to take effect."
+fi
+
+if test true != "${STA_ONLY}"; then
+    _logger "Wait during wlan0 reconnecting to internet..."
+    sleep 5
+
+    # Finish
+echo "Wifi configuration is finished! Please reboot your Raspberry Pi to apply changes..."
