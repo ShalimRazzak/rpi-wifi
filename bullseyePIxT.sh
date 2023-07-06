@@ -315,8 +315,3 @@ sudo chmod +x /bin/rpi-wifi.sh
     ifconfig wlan0 down # better way for docker
     sleep 2
     ifconfig wlan0 up # better way for docker
-
-
-if test true != "${STA_ONLY}"; then
-    _logger "Wait during wlan0 reconnecting to internet..."
-    sleep 5
