@@ -307,27 +307,4 @@ fi
 grep 'iw dev wlan0 set power_save off' /etc/rc.local || sudo sed -i 's:^exit 0:iw dev wlan0 set power_save off\n\nexit 0:' /etc/rc.local
 
 # Finish
-if test true == "${STA_ONLY}"; then
-    _logger "Reconfiguring wlan for new WiFi connection: ${CLIENT_SSID}"
-    _logger " --> please wait (usually 20-30 seconds total)."
-    sleep 1
-    wpa_cli -i wlan0 reconfigure
-    sleep 10
-    ifconfig wlan0 down # better way for docker
-    sleep 2
-    ifconfig wlan0 up # better way for docker
-    _logger "STA configuration is finished!"
-elif test true == "${AP_ONLY}"; then
-    _logger "AP configuration is finished!"
-    _logger " --> You MUST REBOOT for the new AP changes to take effect."
-elif test true != "${STA_ONLY}" && test true != "${AP_ONLY}"; then
-    _logger "AP + STA configurations are finished!"
-    _logger " --> You MUST REBOOT for the new AP changes to take effect."
-fi
 
-if test true != "${STA_ONLY}"; then
-    _logger "Wait during wlan0 reconnecting to internet..."
-    sleep 5
-    # pushd "$(dirname "${BASH_SOURCE[0]}")"; sudo ./ap_sta_cron2.sh; popd
-    #curl https://raw.githubusercontent.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP/master/ap_sta_cron.sh | bash -s --
-fi
