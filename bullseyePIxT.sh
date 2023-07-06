@@ -176,6 +176,7 @@ sudo apt -y update
 sudo apt -y upgrade
 sudo apt -y install dnsmasq dhcpcd hostapd cron
 
+
 SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="${MAC_ADDRESS}", KERNEL=="phy0", \
   RUN+="/sbin/iw phy phy0 interface add ap@wlan0 type __ap", \
   RUN+="/bin/ip link set ap@wlan0 address ${MAC_ADDRESS}
@@ -275,16 +276,129 @@ EOF
 sudo chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
 fi
 
+if test true != "${STA_ONLY}"; then
+    # enable dnsmasq.service / disable hostapd.service
+    _logger "enable dnsmasq.service / disable hostapd.service"
+    systemctl unmask dnsmasq.service
+    systemctl enable dnsmasq.service
+    sudo systemctl stop hostapd # if the default hostapd service was active before
+    sudo systemctl disable hostapd # if the default hostapd service was enabled before
+    sudo systemctl enable accesspoint@wlan0.service
+    sudo rfkill unblock wlan
+    systemctl daemon-reload
+fi
+
 # create ap sta log folder
 mkdir -p /var/log/ap_sta_wifi
 touch /var/log/ap_sta_wifi/ap0_mgnt.log
 touch /var/log/ap_sta_wifi/on_boot.log
 
+if test true != "${NO_INTERNET}"; then
+  if test true != "${STA_ONLY}"; then
+    # Add firewall rules
+    sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    sudo iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
     sudo iptables -A FORWARD -i wlan0 -o ap@wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
     sudo iptables -A FORWARD -i ap@wlan0 -o wlan0 -j ACCEPT
     sudo netfilter-persistent save
+  fi
+fi
 
 # persist powermanagement off for wlan0
 grep 'iw dev wlan0 set power_save off' /etc/rc.local || sudo sed -i 's:^exit 0:iw dev wlan0 set power_save off\n\nexit 0:' /etc/rc.local
 
 # Finish
+if test true == "${STA_ONLY}"; then
+    _logger "Reconfiguring wlan for new WiFi connection: ${CLIENT_SSID}"
+    _logger " --> please wait (usually 20-30 seconds total)."
+    sleep 1
+    wpa_cli -i wlan0 reconfigure
+    sleep 10
+    ifconfig wlan0 down # better way for docker
+    sleep 2
+    ifconfig wlan0 up # better way for docker
+    _logger "STA configuration is finished!"
+elif test true == "${AP_ONLY}"; then
+    _logger "AP configuration is finished!"
+    _logger " --> You MUST REBOOT for the new AP changes to take effect."
+elif test true != "${STA_ONLY}" && test true != "${AP_ONLY}"; then
+    _logger "AP + STA configurations are finished!"
+    _logger " --> You MUST REBOOT for the new AP changes to take effect."
+fi
+
+if test true != "${STA_ONLY}"; then
+    _logger "Wait during wlan0 reconnecting to internet..."
+    sleep 5
+fi
+
+# set -exv
+
+_logger() {
+    echo -e "${GREEN}"
+    echo "${1}"
+    echo -e "${DEFAULT}"
+}
+
+if [ $(id -u) != 0 ]; then
+    echo -e "${RED}"
+    echo "You need to be root to run this script"
+    echo "Please run 'sudo bash $0'"
+    echo -e "${DEFAULT}"
+    exit 1
+fi
+
+# check if crontabs are initialized
+if [[ 1 -eq $(/usr/bin/crontab -l | grep -cF "no crontab for root") ]]; then
+    echo -e ${RED}
+    echo "this script need to use crontab."
+    echo "you have to initialize and configure crontabs before run this script!"
+    echo "run 'sudo crontab -e'"
+    echo "select EDITOR nano or whatever"
+    echo "edit crontab by adding '# a comment line' or whatever"
+    echo "save and exit 'ctrl + s' & 'crtl + x'"
+    echo "restart the script 'sudo bash $0'"
+    echo -e "${DEFAULT}"
+    exit 1
+fi
+
+check_crontab_initialized=$(/usr/bin/crontab -l | grep -cF "# comment for crontab init")
+if test 1 != $check_crontab_initialized; then
+    # Check if crontab exist for "sudo user"
+    _logger "init crontab first time by adding comment"
+    /usr/bin/crontab -l >cron_jobs
+    echo -e "# comment for crontab init\n" >>cron_jobs
+    /usr/bin/crontab cron_jobs
+    rm cron_jobs
+else
+    _logger "Crontab already initialized"
+fi
+
+# Create hostapd ap0 monitor
+_logger "Create hostapd ap0 monitor cronjob"
+# do not create the same cronjob if exist
+cron_jobs=/tmp/tmp.cron
+cronjob_1=$(/usr/bin/crontab -l | grep -cF "* * * * * /bin/bash /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1")
+if test 1 != $cronjob_1; then
+    # crontab -l | { cat; echo -e "# Start hostapd when ap0 already exists\n* * * * * /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1\n"; } | crontab -
+    /usr/bin/crontab -l >$cron_jobs
+    echo -e "# Start hostapd when ap0 already exists\n* * * * * /bin/bash /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1\n" >>$cron_jobs
+    /usr/bin/crontab <$cron_jobs
+    rm $cron_jobs
+    _logger "Cronjob created"
+else
+    _logger "Crontjob exist"
+fi
+# Create AP + STA cronjob boot on start
+_logger "Create AP and STA Client cronjob"
+# do not create the same cronjob if exist
+cronjob_2=$(/usr/bin/crontab -l | grep -cF "@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1")
+if test 1 != $cronjob_2; then
+    # crontab -l | { cat; echo -e "# On boot start AP + STA config\n@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1\n"; } | crontab -
+    /usr/bin/crontab -l >$cron_jobs
+    echo -e "# On boot start AP + STA config\n@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1\n" >>$cron_jobs
+    /usr/bin/crontab <$cron_jobs
+    rm $cron_jobs
+    _logger "Cronjob created"
+else
+    _logger "Cronjob exist"
+fi
