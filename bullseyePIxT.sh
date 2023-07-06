@@ -2,10 +2,11 @@
 # The script configures simultaneous AP and Managed Mode Wifi on Raspberry Pi
 # Distribution Raspbian Bullseye
 # works on:
-#           -Raspberry Pi Zero W
+#           -Raspberry Pi Zero 2 W
+#           -Raspberry Pi 4 B
 # Licence: GPLv3
-# Repository: https://github.com/ShalimRazzak/rpi-wifi
-# Special thanks to: https://github.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP
+# Author: Mickael Lehoux <mickael.lehoux@gmail.com>
+# Repository: https://github.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP
 # Special thanks to: https://github.com/lukicdarkoo/rpi-wifi
 
 # set -exv
@@ -35,10 +36,12 @@ _welcome() {
     echo -e "|__/  |__/|__/                             \______/    |__/  |__/  |__/"
     echo -e "                                                                       "
     echo -e "                                                    version ${VERSION} "
-    echo -e " By https://github.com/ShalimRazzak                                    "
+    echo -e " By https://github.com/MkLHX                                           "
     echo -e "${GREEN}                                                               "
     echo -e "Manage AP + STA modes on Raspberry Pi with the same wifi chip\n        "
     echo -e "${RASPBERRY}                                                           "
+    echo -e "V2.x.x replaces chron with an integrated service model.                "
+    echo -e "${GREEN}                                                               "
 }
 
 _logger() {
@@ -55,16 +58,16 @@ USAGE:
     ap_sta_config.sh --ap <ap_ssid> [<ap_password>] --client <client_password> [<client_password>] --country <iso_3166_country_code>
 
     # configure AP + STA
-    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country US
+    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country FR
 
     # configure AP + STA and change the wifi mode
-    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country US --hwmode g
+    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country FR --hwmode b
 
     # update the AP configuration
     ap_sta_config.sh --ap ap_ssid ap_passphrases --ap-only
 
     # update the STA (client) configuration
-    ap_sta_config.sh --client client_ssid client_passphrase --country US --sta-only
+    ap_sta_config.sh --client client_ssid client_passphrase --country FR --sta-only
 
     # logs are written in /var/log/ap_sta_wifi folder
 
@@ -72,7 +75,7 @@ PARAMETERS:
     -a, --ap      	    AP SSID & password
     -c, --client	    Client SSID & password
     -i, --ip            AP IP (by default ip pattern 192.168.10.x)
-    -cy, --country      ISO3166 Country Code (by default US)
+    -cy, --country      ISO3166 Country Code (by default FR)
     -hw, --hwmode       Mode Wi-Fi a = IEEE 802.11a, b = IEEE 802.11b, g = IEEE 802.11g (by default g)
 
 FLAGS:
@@ -122,6 +125,10 @@ while [[ $# -gt 0 ]]; do
         NO_INTERNET="true"
         shift
         ;;
+    -ao | --ap-only)
+        AP_ONLY="true"
+        shift
+        ;;
     -so | --sta-only)
         STA_ONLY="true"
         shift
@@ -145,33 +152,65 @@ if [ $(id -u) != 0 ]; then
     exit 1
 fi
 
-[ $AP_SSID ] || usage
+(test -v AP_SSID && test -v CLIENT_SSID && test -v ARG_COUNTRY_CODE) || (test -v AP_SSID && test -v AP_ONLY) || (test -v CLIENT_SSID && test -v ARG_COUNTRY_CODE && test -v STA_ONLY) || _usage
 
 WIFI_MODE=${ARG_WIFI_MODE:-'g'}
-COUNTRY_CODE=${ARG_COUNTRY_CODE:-'US'}
+COUNTRY_CODE=${ARG_COUNTRY_CODE:-'FR'}
 AP_IP=${ARG_AP_IP:-'192.168.10.1'}
 AP_IP_BEGIN=$(echo "${AP_IP}" | sed -e 's/\.[0-9]\{1,3\}$//g')
-MAC_ADDRESS="$(cat /sys/class/net/wlan0/address)"
+
+if ! test -v AP_ONLY; then
+    AP_ONLY="false"
+fi
+
+if ! test -v STA_ONLY; then
+    STA_ONLY="false"
+fi
+
+if ! test -v NO_INTERNET; then
+    NO_INTERNET="false"
+fi
+
+# welcome cli user
+_welcome
 
 # Install dependencies
-sudo apt -y install dnsmasq dhcpcd hostapd
-sudo apt -y update
-sudo apt -y upgrade
+_logger "check if dependencies needed"
+# keep order of dependencies installation
+if [[ $(dpkg -l | grep -c dnsmasq) == 0 ]]; then
+    apt -y update
+    # apt -y install cron # --> no longer using chron (it's a service!).
+    apt -y install dhcpcd
+    apt -y install hostapd
+    apt -y install dnsmasq
+fi
 
+if test true != "${STA_ONLY}"; then
+    # Exclude ap0 from `/etc/dhcpcd.conf`
+    sudo bash -c 'cat >> /etc/dhcpcd.conf' << EOF
+# this defines static addressing to ap@wlan0 and disables wpa_supplicant for this interface
+interface ap@wlan0
+    static ip_address=${AP_IP}/24
+    ipv4only
+    nohook wpa_supplicant
+EOF
 
     # Populate `/etc/dnsmasq.conf`
-sudo bash -c 'cat > /etc/dnsmasq.conf' << EOF
+    _logger "Populate /etc/dnsmasq.conf"
+    bash -c 'cat > /etc/dnsmasq.conf' << EOF
 interface=lo,ap@wlan0
 no-dhcp-interface=lo,wlan0
 bind-interfaces
-server=8.8.8.8
+server=1.1.1.1
 domain-needed
 bogus-priv
 dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
+dhcp-option=3,${AP_IP}
 EOF
 
     # Populate `/etc/hostapd/hostapd.conf`
-sudo bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
+    _logger "Populate /etc/hostapd/hostapd.conf"
+    bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
 ctrl_interface=/var/run/hostapd
 ctrl_interface_group=0
 interface=ap@wlan0
@@ -180,53 +219,14 @@ ieee80211n=1
 ssid=${AP_SSID}
 hw_mode=${WIFI_MODE}
 channel=11
-wmm_enabled=0
+wmm_enabled=1
 macaddr_acl=0
 auth_algs=1
 wpa=2
 $([ $AP_PASSPHRASE ] && echo "wpa_passphrase=${AP_PASSPHRASE}")
 wpa_key_mgmt=WPA-PSK
-wpa_pairwise=TKIP CCMP
+wpa_pairwise=TKIP
 rsn_pairwise=CCMP
-EOF
-
-# Populate `/etc/default/hostapd`
-sudo bash -c 'cat > /etc/default/hostapd' << EOF
-DAEMON_CONF="/etc/hostapd/hostapd.conf"
-EOF
-
-# Populate `/etc/wpa_supplicant/wpa_supplicant.conf`
-sudo bash -c 'cat > /etc/wpa_supplicant/wpa_supplicant.conf' << EOF
-country=US
-ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-update_config=1
-
-network={
-    ssid="${CLIENT_SSID}"
-    $([ $CLIENT_PASSPHRASE ] && echo "psk=\"${CLIENT_PASSPHRASE}\"")
-    id_str="AP1"
-}
-EOF
-
-# Populate `/etc/network/interfaces`
-sudo bash -c 'cat > /etc/network/interfaces' << EOF
-source-directory /etc/network/interfaces.d
-
-auto lo
-auto ap0
-auto wlan0
-iface lo inet loopback
-
-allow-hotplug ap0
-iface ap0 inet static
-    address ${AP_IP}
-    netmask 255.255.255.0
-    hostapd /etc/hostapd/hostapd.conf
-
-allow-hotplug wlan0
-iface wlan0 inet manual
-    wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
-iface AP1 inet dhcp
 EOF
 
     sudo chmod 600 /etc/hostapd/hostapd.conf
@@ -251,6 +251,7 @@ EOF
     # not used, as the agent is hooked by dhcpcd
     sudo systemctl disable wpa_supplicant.service
 
+if test true != "${NO_INTERNET}"; then
     # We can then follow Raspberry’s documentation to enable routing and IP masquerading:
     sudo DEBIAN_FRONTEND=noninteractive apt install -y netfilter-persistent iptables-persistent
 
@@ -259,10 +260,13 @@ EOF
 # Enable IPv4 routing
 net.ipv4.ip_forward=1
 EOF
+fi
+fi
 
-
+if test true != "${AP_ONLY}"; then
     # Populate `/etc/wpa_supplicant/wpa_supplicant.conf`
-sudo bash -c 'cat > /etc/wpa_supplicant/wpa_supplicant.conf' << EOF
+    _logger "Populate /etc/wpa_supplicant/wpa_supplicant.conf"
+    sudo bash -c 'cat > /etc/wpa_supplicant/wpa_supplicant.conf' << EOF
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 country=${COUNTRY_CODE}
@@ -272,8 +276,12 @@ network={
     scan_ssid=1
 }
 EOF
+sudo chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
+fi
 
-
+if test true != "${STA_ONLY}"; then
+    # enable dnsmasq.service / disable hostapd.service
+    _logger "enable dnsmasq.service / disable hostapd.service"
     systemctl unmask dnsmasq.service
     systemctl enable dnsmasq.service
     sudo systemctl stop hostapd # if the default hostapd service was active before
@@ -281,32 +289,29 @@ EOF
     sudo systemctl enable accesspoint@wlan0.service
     sudo rfkill unblock wlan
     systemctl daemon-reload
+fi
 
+# create ap sta log folder
+mkdir -p /var/log/ap_sta_wifi
+touch /var/log/ap_sta_wifi/ap0_mgnt.log
+touch /var/log/ap_sta_wifi/on_boot.log
 
-# persist powermanagement off for wlan0
-grep 'iw dev wlan0 set power_save off' /etc/rc.local || sudo sed -i 's:^exit 0:iw dev wlan0 set power_save off\n\nexit 0:' /etc/rc.local
-
-# Populate `/bin/start_wifi.sh`
-sudo bash -c 'cat > /bin/rpi-wifi.sh' << EOF
-echo 'Starting Wifi AP and client...'
-sleep 30
-sudo ifdown --force wlan0
-sudo ifdown --force ap0
-sudo ifup ap0
-sudo ifup wlan0
-$([ "${NO_INTERNET-}" != "true" ] && echo "sudo sysctl -w net.ipv4.ip_forward=1")
-$([ "${NO_INTERNET-}" != "true" ] && echo "sudo iptables -t nat -A POSTROUTING -s ${AP_IP_BEGIN}.0/24 ! -d ${AP_IP_BEGIN}.0/24 -j MASQUERADE")
-$([ "${NO_INTERNET-}" != "true" ] && echo "sudo systemctl restart dnsmasq")
-EOF
-sudo chmod +x /bin/rpi-wifi.sh
-
+if test true != "${NO_INTERNET}"; then
+  if test true != "${STA_ONLY}"; then
+    # Add firewall rules
     sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
     sudo iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
     sudo iptables -A FORWARD -i wlan0 -o ap@wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
     sudo iptables -A FORWARD -i ap@wlan0 -o wlan0 -j ACCEPT
     sudo netfilter-persistent save
+  fi
+fi
 
+# persist powermanagement off for wlan0
+grep 'iw dev wlan0 set power_save off' /etc/rc.local || sudo sed -i 's:^exit 0:iw dev wlan0 set power_save off\n\nexit 0:' /etc/rc.local
 
+# Finish
+if test true == "${STA_ONLY}"; then
     _logger "Reconfiguring wlan for new WiFi connection: ${CLIENT_SSID}"
     _logger " --> please wait (usually 20-30 seconds total)."
     sleep 1
@@ -315,3 +320,94 @@ sudo chmod +x /bin/rpi-wifi.sh
     ifconfig wlan0 down # better way for docker
     sleep 2
     ifconfig wlan0 up # better way for docker
+    _logger "STA configuration is finished!"
+elif test true == "${AP_ONLY}"; then
+    _logger "AP configuration is finished!"
+    _logger " --> You MUST REBOOT for the new AP changes to take effect."
+elif test true != "${STA_ONLY}" && test true != "${AP_ONLY}"; then
+    _logger "AP + STA configurations are finished!"
+    _logger " --> You MUST REBOOT for the new AP changes to take effect."
+fi
+
+if test true != "${STA_ONLY}"; then
+    _logger "Wait during wlan0 reconnecting to internet..."
+    sleep 5
+fi
+
+# set -exv
+
+DEFAULT='\033[0;39m'
+WHITE='\033[0;02m'
+RASPBERRY='\033[0;35m'
+GREEN='\033[1;32m'
+RED='\033[1;31m'
+
+_logger() {
+    echo -e "${GREEN}"
+    echo "${1}"
+    echo -e "${DEFAULT}"
+}
+
+if [ $(id -u) != 0 ]; then
+    echo -e "${RED}"
+    echo "You need to be root to run this script"
+    echo "Please run 'sudo bash $0'"
+    echo -e "${DEFAULT}"
+    exit 1
+fi
+
+# check if crontabs are initialized
+if [[ 1 -eq $(/usr/bin/crontab -l | grep -cF "no crontab for root") ]]; then
+    echo -e ${RED}
+    echo "this script need to use crontab."
+    echo "you have to initialize and configure crontabs before run this script!"
+    echo "run 'sudo crontab -e'"
+    echo "select EDITOR nano or whatever"
+    echo "edit crontab by adding '# a comment line' or whatever"
+    echo "save and exit 'ctrl + s' & 'crtl + x'"
+    echo "restart the script 'sudo bash $0'"
+    echo -e "${DEFAULT}"
+    exit 1
+fi
+
+check_crontab_initialized=$(/usr/bin/crontab -l | grep -cF "# comment for crontab init")
+if test 1 != $check_crontab_initialized; then
+    # Check if crontab exist for "sudo user"
+    _logger "init crontab first time by adding comment"
+    /usr/bin/crontab -l >cron_jobs
+    echo -e "# comment for crontab init\n" >>cron_jobs
+    /usr/bin/crontab cron_jobs
+    rm cron_jobs
+else
+    _logger "Crontab already initialized"
+fi
+
+# Create hostapd ap0 monitor
+_logger "Create hostapd ap0 monitor cronjob"
+# do not create the same cronjob if exist
+cron_jobs=/tmp/tmp.cron
+cronjob_1=$(/usr/bin/crontab -l | grep -cF "* * * * * /bin/bash /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1")
+if test 1 != $cronjob_1; then
+    # crontab -l | { cat; echo -e "# Start hostapd when ap0 already exists\n* * * * * /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1\n"; } | crontab -
+    /usr/bin/crontab -l >$cron_jobs
+    echo -e "# Start hostapd when ap0 already exists\n* * * * * /bin/bash /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1\n" >>$cron_jobs
+    /usr/bin/crontab <$cron_jobs
+    rm $cron_jobs
+    _logger "Cronjob created"
+else
+    _logger "Crontjob exist"
+fi
+# Create AP + STA cronjob boot on start
+_logger "Create AP and STA Client cronjob"
+# do not create the same cronjob if exist
+cronjob_2=$(/usr/bin/crontab -l | grep -cF "@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1")
+if test 1 != $cronjob_2; then
+    # crontab -l | { cat; echo -e "# On boot start AP + STA config\n@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1\n"; } | crontab -
+    /usr/bin/crontab -l >$cron_jobs
+    echo -e "# On boot start AP + STA config\n@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1\n" >>$cron_jobs
+    /usr/bin/crontab <$cron_jobs
+    rm $cron_jobs
+    _logger "Cronjob created"
+else
+    _logger "Cronjob exist"
+fi
