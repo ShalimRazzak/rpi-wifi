@@ -1,13 +1,11 @@
 #!/bin/bash
 # The script configures simultaneous AP and Managed Mode Wifi on Raspberry Pi
-# Distribution Raspbian Buster
+# Distribution Raspbian Bullseye
 # works on:
 #           -Raspberry Pi Zero W
-#           -Raspberry Pi 3 B+
-#           -Raspberry Pi 3 A+
 # Licence: GPLv3
-# Author: Mickael Lehoux <mickael.lehoux@gmail.com>
-# Repository: https://github.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP
+# Repository: https://github.com/ShalimRazzak/rpi-wifi
+# Special thanks to: https://github.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP
 # Special thanks to: https://github.com/lukicdarkoo/rpi-wifi
 
 # set -exv
@@ -24,7 +22,7 @@ GREEN='\033[1;32m'
 RED='\033[1;31m'
 
 _welcome() {
-    VERSION="1.7.3"
+    VERSION="2.0.1"
     echo -e "${RASPBERRY}\n"
     echo -e "                                                                       "
     echo -e "  /888888  /8888888                         /888888  /88888888 /888888 "
@@ -37,9 +35,11 @@ _welcome() {
     echo -e "|__/  |__/|__/                             \______/    |__/  |__/  |__/"
     echo -e "                                                                       "
     echo -e "                                                    version ${VERSION} "
-    echo -e " By https://github.com/MkLHX                                           "
     echo -e "${GREEN}                                                               "
-    echo -e "Manage AP + STA modes on Raspberry Pi with the same wifi chip\n\n      "
+    echo -e "Manage AP + STA modes on Raspberry Pi with the same wifi chip\n        "
+    echo -e "${RASPBERRY}                                                           "
+    echo -e "V2.x.x replaces chron with an integrated service model.                "
+    echo -e "${GREEN}                                                               "
 }
 
 _logger() {
@@ -56,16 +56,16 @@ USAGE:
     ap_sta_config.sh --ap <ap_ssid> [<ap_password>] --client <client_password> [<client_password>] --country <iso_3166_country_code>
 
     # configure AP + STA
-    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country FR
+    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country US
 
     # configure AP + STA and change the wifi mode
-    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country FR --hwmode b
+    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country US --hwmode b
 
     # update the AP configuration
     ap_sta_config.sh --ap ap_ssid ap_passphrases --ap-only
 
     # update the STA (client) configuration
-    ap_sta_config.sh --client client_ssid client_passphrase --country FR --sta-only
+    ap_sta_config.sh --client client_ssid client_passphrase --country US --sta-only
 
     # logs are written in /var/log/ap_sta_wifi folder
 
@@ -73,7 +73,7 @@ PARAMETERS:
     -a, --ap      	    AP SSID & password
     -c, --client	    Client SSID & password
     -i, --ip            AP IP (by default ip pattern 192.168.10.x)
-    -cy, --country      ISO3166 Country Code (by default FR)
+    -cy, --country      ISO3166 Country Code (by default US)
     -hw, --hwmode       Mode Wi-Fi a = IEEE 802.11a, b = IEEE 802.11b, g = IEEE 802.11g (by default g)
 
 FLAGS:
@@ -167,7 +167,7 @@ fi
 (test -v AP_SSID && test -v CLIENT_SSID && test -v ARG_COUNTRY_CODE) || (test -v AP_SSID && test -v AP_ONLY) || (test -v CLIENT_SSID && test -v ARG_COUNTRY_CODE && test -v STA_ONLY) || _usage
 
 WIFI_MODE=${ARG_WIFI_MODE:-'g'}
-COUNTRY_CODE=${ARG_COUNTRY_CODE:-'FR'}
+COUNTRY_CODE=${ARG_COUNTRY_CODE:-'US'}
 AP_IP=${ARG_AP_IP:-'192.168.10.1'}
 AP_IP_BEGIN=$(echo "${AP_IP}" | sed -e 's/\.[0-9]\{1,3\}$//g')
 MAC_ADDRESS="$(cat /sys/class/net/wlan0/address)"
@@ -385,4 +385,68 @@ fi
 if test true != "${STA_ONLY}"; then
     _logger "Wait during wlan0 reconnecting to internet..."
     /usr/bin/sleep 15
+fi
+
+if [ $(id -u) != 0 ]; then
+    echo -e "${RED}"
+    echo "You need to be root to run this script"
+    echo "Please run 'sudo bash $0'"
+    echo -e "${DEFAULT}"
+    exit 1
+fi
+
+# check if crontabs are initialized
+if [[ 1 -eq $(/usr/bin/crontab -l | grep -cF "no crontab for root") ]]; then
+    echo -e ${RED}
+    echo "this script need to use crontab."
+    echo "you have to initialize and configure crontabs before run this script!"
+    echo "run 'sudo crontab -e'"
+    echo "select EDITOR nano or whatever"
+    echo "edit crontab by adding '# a comment line' or whatever"
+    echo "save and exit 'ctrl + s' & 'crtl + x'"
+    echo "restart the script 'sudo bash $0'"
+    echo -e "${DEFAULT}"
+    exit 1
+fi
+
+check_crontab_initialized=$(/usr/bin/crontab -l | grep -cF "# comment for crontab init")
+if test 1 != $check_crontab_initialized; then
+    # Check if crontab exist for "sudo user"
+    _logger "init crontab first time by adding comment"
+    /usr/bin/crontab -l >cron_jobs
+    echo -e "# comment for crontab init\n" >>cron_jobs
+    /usr/bin/crontab cron_jobs
+    rm cron_jobs
+else
+    _logger "Crontab already initialized"
+fi
+
+# Create hostapd ap0 monitor
+_logger "Create hostapd ap0 monitor cronjob"
+# do not create the same cronjob if exist
+cron_jobs=/tmp/tmp.cron
+cronjob_1=$(/usr/bin/crontab -l | grep -cF "* * * * * /bin/bash /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1")
+if test 1 != $cronjob_1; then
+    # crontab -l | { cat; echo -e "# Start hostapd when ap0 already exists\n* * * * * /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1\n"; } | crontab -
+    /usr/bin/crontab -l >$cron_jobs
+    echo -e "# Start hostapd when ap0 already exists\n* * * * * /bin/bash /bin/manage-ap0-iface.sh >> /var/log/ap_sta_wifi/ap0_mgnt.log 2>&1\n" >>$cron_jobs
+    /usr/bin/crontab <$cron_jobs
+    rm $cron_jobs
+    _logger "Cronjob created"
+else
+    _logger "Crontjob exist"
+fi
+# Create AP + STA cronjob boot on start
+_logger "Create AP and STA Client cronjob"
+# do not create the same cronjob if exist
+cronjob_2=$(/usr/bin/crontab -l | grep -cF "@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1")
+if test 1 != $cronjob_2; then
+    # crontab -l | { cat; echo -e "# On boot start AP + STA config\n@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1\n"; } | crontab -
+    /usr/bin/crontab -l >$cron_jobs
+    echo -e "# On boot start AP + STA config\n@reboot sleep 20 && /bin/bash /bin/rpi-wifi.sh >> /var/log/ap_sta_wifi/on_boot.log 2>&1\n" >>$cron_jobs
+    /usr/bin/crontab <$cron_jobs
+    rm $cron_jobs
+    _logger "Cronjob created"
+else
+    _logger "Cronjob exist"
 fi
