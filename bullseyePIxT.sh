@@ -300,24 +300,6 @@ $([ "${NO_INTERNET-}" != "true" ] && echo "sudo systemctl restart dnsmasq")
 EOF
 sudo chmod +x /bin/rpi-wifi.sh
 
-# Configure cron job
-# sudo bash -c 'cat > /etc/systemd/system/rpi-wifi.service' << EOF
-# [Unit]
-# Description=Simultaneous AP and Managed Mode Wifi on Raspberry Pi
-# Requires=network.target
-# After=network.target
-#
-# [Service]
-# ExecStart=/bin/bash -c 'bullseyePIxT.sh'
-# User=root
-#
-# [Install]
-# WantedBy=multi-user.target
-# EOF
-# sudo systemctl daemon-reload
-# sudo systemctl enable rpi-wifi.service
-crontab -l | { cat; echo "@reboot /bin/bullseyePIxT.sh"; } | crontab -
-# Finish
 
      # pushd "$(dirname "${BASH_SOURCE[0]}")"; sudo ./no_crontab_for_root.sh; popd
     #curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/no_crontab_for_root.sh | bash -s --
