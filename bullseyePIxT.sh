@@ -303,4 +303,3 @@ sudo chmod +x /bin/rpi-wifi.sh
 
      # pushd "$(dirname "${BASH_SOURCE[0]}")"; sudo ./no_crontab_for_root.sh; popd
     #curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/no_crontab_for_root.sh | bash -s --
-fi
