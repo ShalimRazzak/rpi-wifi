@@ -273,7 +273,6 @@ network={
 }
 EOF
 sudo chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
-fi
 
 if test true != "${STA_ONLY}"; then
     # enable dnsmasq.service / disable hostapd.service
