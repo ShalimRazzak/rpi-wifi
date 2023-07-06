@@ -277,9 +277,9 @@ fi
 
 if test true != "${STA_ONLY}"; then
     # enable dnsmasq.service / disable hostapd.service
-    _logger "enable dnsmasq.service / disable hostapd.service"
     systemctl unmask dnsmasq.service
     systemctl enable dnsmasq.service
+    _logger "enable dnsmasq.service / disable hostapd.service"
     sudo systemctl stop hostapd # if the default hostapd service was active before
     sudo systemctl disable hostapd # if the default hostapd service was enabled before
     sudo systemctl enable accesspoint@wlan0.service
