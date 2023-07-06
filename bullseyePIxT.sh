@@ -264,7 +264,6 @@ EOF
 net.ipv4.ip_forward=1
 EOF
 fi
-fi
 
 if test true != "${AP_ONLY}"; then
     # Populate `/etc/wpa_supplicant/wpa_supplicant.conf`
