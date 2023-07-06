@@ -315,14 +315,7 @@ sudo chmod +x /bin/rpi-wifi.sh
     ifconfig wlan0 down # better way for docker
     sleep 2
     ifconfig wlan0 up # better way for docker
-    _logger "STA configuration is finished!"
-elif test true == "${AP_ONLY}"; then
-    _logger "AP configuration is finished!"
-    _logger " --> You MUST REBOOT for the new AP changes to take effect."
-elif test true != "${STA_ONLY}" && test true != "${AP_ONLY}"; then
-    _logger "AP + STA configurations are finished!"
-    _logger " --> You MUST REBOOT for the new AP changes to take effect."
-fi
+
 
 if test true != "${STA_ONLY}"; then
     _logger "Wait during wlan0 reconnecting to internet..."
