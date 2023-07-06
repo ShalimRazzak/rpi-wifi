@@ -265,7 +265,6 @@ net.ipv4.ip_forward=1
 EOF
 
 
-if test true != "${AP_ONLY}"; then
     # Populate `/etc/wpa_supplicant/wpa_supplicant.conf`
 sudo bash -c 'cat > /etc/wpa_supplicant/wpa_supplicant.conf' << EOF
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
