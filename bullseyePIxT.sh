@@ -272,7 +272,7 @@ network={
     scan_ssid=1
 }
 EOF
-sudo chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
+
 
 if test true != "${STA_ONLY}"; then
     # enable dnsmasq.service / disable hostapd.service
