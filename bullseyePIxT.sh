@@ -274,8 +274,6 @@ network={
 EOF
 
 
-    # enable dnsmasq.service / disable hostapd.service
-    _logger "enable dnsmasq.service / disable hostapd.service"
     systemctl unmask dnsmasq.service
     systemctl enable dnsmasq.service
     sudo systemctl stop hostapd # if the default hostapd service was active before
