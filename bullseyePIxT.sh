@@ -122,10 +122,6 @@ while [[ $# -gt 0 ]]; do
         NO_INTERNET="true"
         shift
         ;;
-    -ao | --ap-only)
-        AP_ONLY="true"
-        shift
-        ;;
     -so | --sta-only)
         STA_ONLY="true"
         shift
