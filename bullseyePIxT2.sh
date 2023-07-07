@@ -58,16 +58,16 @@ USAGE:
     ap_sta_config.sh --ap <ap_ssid> [<ap_password>] --client <client_password> [<client_password>] --country <iso_3166_country_code>
 
     # configure AP + STA
-    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country US
+    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country FR
 
     # configure AP + STA and change the wifi mode
-    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country US --hwmode b
+    ap_sta_config.sh --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country FR --hwmode b
 
     # update the AP configuration
     ap_sta_config.sh --ap ap_ssid ap_passphrases --ap-only
 
     # update the STA (client) configuration
-    ap_sta_config.sh --client client_ssid client_passphrase --country US --sta-only
+    ap_sta_config.sh --client client_ssid client_passphrase --country FR --sta-only
 
     # logs are written in /var/log/ap_sta_wifi folder
 
@@ -75,7 +75,7 @@ PARAMETERS:
     -a, --ap      	    AP SSID & password
     -c, --client	    Client SSID & password
     -i, --ip            AP IP (by default ip pattern 192.168.10.x)
-    -cy, --country      ISO3166 Country Code (by default US)
+    -cy, --country      ISO3166 Country Code (by default FR)
     -hw, --hwmode       Mode Wi-Fi a = IEEE 802.11a, b = IEEE 802.11b, g = IEEE 802.11g (by default g)
 
 FLAGS:
@@ -145,11 +145,6 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${POSITIONAL[@]}"
 
-# Install dependencies
-sudo apt -y update
-sudo apt -y upgrade
-sudo apt -y install dnsmasq dhcpcd hostapd cron
-
 if [ $(id -u) != 0 ]; then
     echo -e "${RED}"
     echo "You need to be root to run this script! Please run 'sudo bash $0'"
@@ -160,7 +155,7 @@ fi
 (test -v AP_SSID && test -v CLIENT_SSID && test -v ARG_COUNTRY_CODE) || (test -v AP_SSID && test -v AP_ONLY) || (test -v CLIENT_SSID && test -v ARG_COUNTRY_CODE && test -v STA_ONLY) || _usage
 
 WIFI_MODE=${ARG_WIFI_MODE:-'g'}
-COUNTRY_CODE=${ARG_COUNTRY_CODE:-'US'}
+COUNTRY_CODE=${ARG_COUNTRY_CODE:-'FR'}
 AP_IP=${ARG_AP_IP:-'192.168.10.1'}
 AP_IP_BEGIN=$(echo "${AP_IP}" | sed -e 's/\.[0-9]\{1,3\}$//g')
 
