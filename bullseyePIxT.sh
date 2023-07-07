@@ -145,6 +145,11 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${POSITIONAL[@]}"
 
+# Install dependencies
+sudo apt -y update
+sudo apt -y upgrade
+sudo apt -y install dnsmasq dhcpcd hostapd cron
+
 if [ $(id -u) != 0 ]; then
     echo -e "${RED}"
     echo "You need to be root to run this script! Please run 'sudo bash $0'"
