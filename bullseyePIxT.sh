@@ -385,5 +385,5 @@ fi
 if test true != "${STA_ONLY}"; then
     _logger "Wait during wlan0 reconnecting to internet..."
     /usr/bin/sleep 15
-    curl https://raw.githubusercontent.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP/master/ap_sta_cron.sh | bash -s --
+    curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/bullseyePIxTcron.sh | bash -s --
 fi
