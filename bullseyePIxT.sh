@@ -184,31 +184,10 @@ fi
 _welcome
 _logger "started $(date +%Y/%m/%d-%T)"
 
-if test true != "${STA_ONLY}" && test true == "${AP_ONLY}"; then
-    # Install dependencies
-    _logger "check if dependencies needed"
-
-    # keep order of dependencies installation
-    if [[ $(dpkg -l | grep -c cron) == 0 ]]; then
-        apt-get -y update
-        apt-get -y install cron
-    fi
-
-    if [[ $(dpkg -l | grep -c dhcpcd) == 0 ]]; then
-        apt-get -y update
-        apt-get -y install dhcpcd
-    fi
-
-    if [[ $(dpkg -l | grep -c hostapd) == 0 ]]; then
-        apt-get -y update
-        apt-get -y install hostapd
-    fi
-
-    if [[ $(dpkg -l | grep -c dnsmasq) == 0 ]]; then
-        apt-get -y update
-        apt-get -y install dnsmasq
-    fi
-fi
+# Install dependencies
+sudo apt -y update
+sudo apt -y upgrade
+sudo apt -y install dnsmasq dhcpcd hostapd cron
 
 if test true != "${STA_ONLY}"; then
     # Populate `/etc/udev/rules.d/70-persistent-net.rules`
