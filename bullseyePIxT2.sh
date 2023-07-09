@@ -333,5 +333,5 @@ if test true != "${STA_ONLY}"; then
     _logger "Wait during wlan0 reconnecting to internet..."
     sleep 5
     # pushd "$(dirname "${BASH_SOURCE[0]}")"; sudo ./ap_sta_cron2.sh; popd
-    #curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/bullseyePIxTcron.sh | bash -s --
+    #curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/bullseyePIxTcron.sh | sudo bash -s --
 fi
