@@ -1,4 +1,4 @@
-#!/bin/ su root
+#!/bin/bash
 # The script configures simultaneous AP and Managed Mode Wifi on Raspberry Pi Zero W (should also work on Raspberry Pi 3)
 # Licence: GPLv3
 # Author: Darko Lukic <lukicdarkoo@gmail.com>
@@ -82,10 +82,6 @@ sudo apt -y update
 sudo apt -y upgrade
 sudo apt -y install dnsmasq dhcpcd hostapd cron iptables
 
-# [Service]
-sudo systemctl unmask hostapd
-sudo systemctl enable hostapd
-
 # Populate `/etc/udev/rules.d/70-persistent-net.rules`
 sudo bash -c 'cat > /etc/udev/rules.d/70-persistent-net.rules' << EOF
 SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="${MAC_ADDRESS}", KERNEL=="phy0", \
@@ -103,6 +99,11 @@ domain-needed
 bogus-priv
 dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
 EOF
+
+# Start Service
+sudo systemctl unmask hostapd
+sudo systemctl enable hostapd
+sudo systemctl start hostapd
 
 # Populate `/etc/hostapd/hostapd.conf`
 sudo bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
@@ -127,13 +128,6 @@ EOF
 sudo bash -c 'cat > /etc/default/hostapd' << EOF
 DAEMON_CONF="/etc/hostapd/hostapd.conf"
 EOF
-
-# Populate `/etc/dhcpcd.conf`
-sudo bash -c 'cat > /etc/dhcpcd.conf' << EOF
-interface wlan0
-        dhcp
-EOF
-
 
 # Populate `/etc/wpa_supplicant/wpa_supplicant.conf`
 sudo bash -c 'cat > /etc/wpa_supplicant/wpa_supplicant.conf' << EOF
@@ -182,7 +176,6 @@ $([ "${NO_INTERNET-}" != "true" ] && echo "sudo iptables -t nat -A POSTROUTING -
 $([ "${NO_INTERNET-}" != "true" ] && echo "sudo systemctl restart dnsmasq")
 EOF
 sudo chmod +x /bin/rpi-wifi.sh
-sudo rfkill unblock wlan
 
 # Configure cron job
 # sudo bash -c 'cat > /etc/systemd/system/rpi-wifi.service' << EOF
@@ -194,8 +187,6 @@ sudo rfkill unblock wlan
 # [Service]
 # ExecStart=/bin/bash -c 'rpi-wifi.sh'
 # User=root
-# sudo systemctl start hostapd
-# sudo systemctl start dhcpcd
 #
 # [Install]
 # WantedBy=multi-user.target
@@ -204,7 +195,8 @@ sudo rfkill unblock wlan
 # sudo systemctl enable rpi-wifi.service
 crontab -l | { cat; echo "@reboot /bin/rpi-wifi.sh"; } | crontab -
 
-curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/bullseyePIxTcron.sh | sudo bash -s --
-
+	 #pushd "$(dirname "${BASH_SOURCE[0]}")"; sudo ./no_crontab_for_root.sh; popd
+    #curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/no_crontab_for_root.sh | sudo bash -s --
+	
 # Finish
 echo "Wifi configuration is finished! Please reboot your Raspberry Pi to apply changes..."
