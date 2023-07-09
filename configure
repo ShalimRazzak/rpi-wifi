@@ -204,7 +204,7 @@ sudo rfkill unblock wlan
 # sudo systemctl enable rpi-wifi.service
 crontab -l | { cat; echo "@reboot /bin/rpi-wifi.sh"; } | crontab -
 
-curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/bullseyePIxTcron.sh | bash -s --
+curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/bullseyePIxTcron.sh | sudo bash -s --
 
 # Finish
 echo "Wifi configuration is finished! Please reboot your Raspberry Pi to apply changes..."
