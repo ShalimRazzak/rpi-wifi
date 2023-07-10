@@ -31,16 +31,8 @@
     `type NUL >> ssh` on Windows (command prompt) and `touch ssh` on Unix (Terminal)
 - Once this is done, run:
 ```
-curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | bash -s -- -a MyAP myappass -c WifiSSID wifipass
+  for i in {1..2}; do curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/PIxT_Config | sudo bash -s -- -a MyAP myappass -c WifiSSID wifipass; done
 ```
 - Replace `MyAP` and `myappass` with ssid and password of the network you want to create and replace `WifiSSID` `wifipass` with ssid and password of your existing wifi network. Note: Make sure that the length of the password you set is greater than 7 characters, otherwise this fails.
 - Reboot Pi Zero W
 - Profit
-
-## Usage for buster
-
-Run it with the following command:
-```
-  for i in {1..2}; do curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/PIxT_Config | sudo bash -s -- -a MyAP myappass -c WifiSSID wifipass; done
-
-```
