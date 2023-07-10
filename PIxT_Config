@@ -195,7 +195,7 @@ sudo chmod +x /bin/rpi-wifi.sh
 crontab -l | { cat; echo "@reboot /bin/rpi-wifi.sh"; } | crontab -
 
 	 #pushd "$(dirname "${BASH_SOURCE[0]}")"; sudo ./no_crontab_for_root.sh; popd
-    #curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/no_crontab_for_root.sh | sudo bash -s --
+    #curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/PIxt_cron.sh | sudo bash -s --
 	
 # Finish
 echo "Wifi configuration is finished! Please reboot your Raspberry Pi to apply changes..."
