@@ -37,7 +37,7 @@ curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | 
 - Reboot Pi Zero W
 - Profit
 
-## Usage for bullseye
+## Usage for buster
 ```
 To run this script, save it as a file with the .sh extension and then run it with the following command:
 
