@@ -197,7 +197,7 @@ EOF
 
     # Populate `/etc/dnsmasq.conf`
     _logger "Populate /etc/dnsmasq.conf"
-    bash -c 'cat > /etc/dnsmasq.conf' << EOF
+    sudo bash -c 'cat > /etc/dnsmasq.conf' << EOF
 interface=lo,ap@wlan0
 no-dhcp-interface=lo,wlan0
 bind-interfaces
@@ -210,7 +210,7 @@ EOF
 
     # Populate `/etc/hostapd/hostapd.conf`
     _logger "Populate /etc/hostapd/hostapd.conf"
-    bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
+    sudo bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
 ctrl_interface=/var/run/hostapd
 ctrl_interface_group=0
 interface=ap@wlan0
