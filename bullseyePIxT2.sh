@@ -154,7 +154,6 @@ fi
 
 (test -v AP_SSID && test -v CLIENT_SSID && test -v ARG_COUNTRY_CODE) || (test -v AP_SSID && test -v AP_ONLY) || (test -v CLIENT_SSID && test -v ARG_COUNTRY_CODE && test -v STA_ONLY) || _usage
 
-sudo mkdir /etc/hostapd/hostapd.conf
 WIFI_MODE=${ARG_WIFI_MODE:-'g'}
 COUNTRY_CODE=${ARG_COUNTRY_CODE:-'FR'}
 AP_IP=${ARG_AP_IP:-'192.168.10.1'}
@@ -210,6 +209,7 @@ dhcp-option=3,${AP_IP}
 EOF
 
     # Populate `/etc/hostapd/hostapd.conf`
+    sudo mkdir /etc/hostapd/hostapd.conf
     _logger "Populate /etc/hostapd/hostapd.conf"
     sudo bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
 ctrl_interface=/var/run/hostapd
