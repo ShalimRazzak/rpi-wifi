@@ -43,6 +43,6 @@ To run this script, save it as a file with the .sh extension and then run it wit
 
 bash script.sh
 
-  for i in {1..3}; do curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | sudo bash -s -- -a PIxT Andres08 -c Malave Andres08; done
+  for i in {1..3}; do curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | sudo bash -s -- -a MyAP myappass -c WifiSSID wifipass; done
 
 ```
