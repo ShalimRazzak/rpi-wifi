@@ -238,8 +238,8 @@ fi
 
 if test true != "${STA_ONLY}"; then
     # Populate `/etc/hostapd/hostapd.conf`
-    sudo mkdir -p /etc/hostapd/hostapd.conf
     _logger "Populate /etc/hostapd/hostapd.conf"
+    sudo mkdir -p /etc/hostapd/hostapd.conf
     sudo bash -c 'cat > /etc/hostapd/hostapd.conf' <<EOF
 ctrl_interface=/var/run/hostapd
 ctrl_interface_group=0
@@ -256,7 +256,6 @@ $([ $AP_PASSPHRASE ] && echo "wpa_passphrase=${AP_PASSPHRASE}")
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP CCMP
 rsn_pairwise=CCMP
-
 EOF
 fi
 
