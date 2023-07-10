@@ -213,7 +213,7 @@ fi
 if test true != "${STA_ONLY}"; then
     # Populate `/etc/udev/rules.d/70-persistent-net.rules`
     _logger "Populate /etc/udev/rules.d/70-persistent-net.rules"
-    bash -c 'cat > /etc/udev/rules.d/70-persistent-net.rules' <<EOF
+    sudo bash -c 'cat > /etc/udev/rules.d/70-persistent-net.rules' <<EOF
 SUBSYSTEM=="ieee80211", ACTION=="add|change", ATTR{macaddress}=="${MAC_ADDRESS}", KERNEL=="phy0", \
 RUN+="/sbin/iw phy phy0 interface add ap0 type __ap", \
 RUN+="/bin/ip link set ap0 address ${MAC_ADDRESS}
@@ -224,7 +224,7 @@ fi
 if test true != "${STA_ONLY}"; then
     # Populate `/etc/dnsmasq.conf`
     _logger "Populate /etc/dnsmasq.conf"
-    bash -c 'cat > /etc/dnsmasq.conf' <<EOF
+    sudo bash -c 'cat > /etc/dnsmasq.conf' <<EOF
 interface=lo,ap0
 no-dhcp-interface=lo,wlan0
 bind-interfaces
@@ -239,7 +239,7 @@ fi
 if test true != "${STA_ONLY}"; then
     # Populate `/etc/hostapd/hostapd.conf`
     _logger "Populate /etc/hostapd/hostapd.conf"
-    bash -c 'cat > /etc/hostapd/hostapd.conf' <<EOF
+    sudo bash -c 'cat > /etc/hostapd/hostapd.conf' <<EOF
 ctrl_interface=/var/run/hostapd
 ctrl_interface_group=0
 interface=ap0
@@ -262,7 +262,7 @@ fi
 if test true != "${STA_ONLY}"; then
     # Populate `/etc/default/hostapd`
     _logger "Populate /etc/default/hostapd"
-    bash -c 'cat > /etc/default/hostapd' <<EOF
+    sudo bash -c 'cat > /etc/default/hostapd' <<EOF
 DAEMON_CONF="/etc/hostapd/hostapd.conf"
 
 EOF
@@ -271,7 +271,7 @@ fi
 if test true != "${AP_ONLY}"; then
     # Populate `/etc/wpa_supplicant/wpa_supplicant.conf`
     _logger "Populate /etc/wpa_supplicant/wpa_supplicant.conf"
-    bash -c 'cat > /etc/wpa_supplicant/wpa_supplicant.conf' <<EOF
+    sudo bash -c 'cat > /etc/wpa_supplicant/wpa_supplicant.conf' <<EOF
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 country=${COUNTRY_CODE}
@@ -293,7 +293,7 @@ fi
 # iface eth0 inet manual
 #
 _logger "Populate /etc/network/interfaces"
-bash -c 'cat > /etc/network/interfaces' <<EOF
+sudo bash -c 'cat > /etc/network/interfaces' <<EOF
 source-directory /etc/network/interfaces.d
 
 auto lo
@@ -321,7 +321,7 @@ EOF
 if test true != "${STA_ONLY}"; then
     # Populate `/bin/manage-ap0-iface.sh`
     _logger "Populate /bin/manage-ap0-iface.sh"
-    bash -c 'cat > /bin/manage-ap0-iface.sh' <<EOF
+    sudo bash -c 'cat > /bin/manage-ap0-iface.sh' <<EOF
 #!/bin/bash
 # check if hostapd service succes to start or not
 # in our case, it cannot start when /var/run/hostapd/ap0 exist
@@ -333,13 +333,13 @@ if test 1 -ne "\${hostapd_is_running}"; then
 fi
 
 EOF
-    chmod +x /bin/manage-ap0-iface.sh
+    sudo chmod +x /bin/manage-ap0-iface.sh
 fi
 
 if test true != "${STA_ONLY}"; then
     # Populate `/bin/rpi-wifi.sh`
     _logger "Populate /bin/rpi-wifi.sh"
-    bash -c 'cat > /bin/rpi-wifi.sh' <<EOF
+    sudo bash -c 'cat > /bin/rpi-wifi.sh' <<EOF
 #!/bin/bash
 echo 'Starting Wifi AP and STA client...'
 /usr/sbin/ifdown --force wlan0
@@ -354,7 +354,7 @@ echo 'WPA Supplicant reconfigure in 5sec...'
 wpa_cli -i wlan0 reconfigure
 
 EOF
-    chmod +x /bin/rpi-wifi.sh
+    sudo chmod +x /bin/rpi-wifi.sh
 fi
 
 if test true != "${STA_ONLY}"; then
