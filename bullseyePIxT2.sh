@@ -209,7 +209,6 @@ dhcp-option=3,${AP_IP}
 EOF
 
     # Populate `/etc/hostapd/hostapd.conf`
-    sudo mkdir /etc/hostapd/hostapd.conf
     _logger "Populate /etc/hostapd/hostapd.conf"
     sudo bash -c 'cat > /etc/hostapd/hostapd.conf' << EOF
 ctrl_interface=/var/run/hostapd
