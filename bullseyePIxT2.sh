@@ -154,6 +154,7 @@ fi
 
 (test -v AP_SSID && test -v CLIENT_SSID && test -v ARG_COUNTRY_CODE) || (test -v AP_SSID && test -v AP_ONLY) || (test -v CLIENT_SSID && test -v ARG_COUNTRY_CODE && test -v STA_ONLY) || _usage
 
+sudo mkdir /etc/hostapd/hostapd.conf
 WIFI_MODE=${ARG_WIFI_MODE:-'g'}
 COUNTRY_CODE=${ARG_COUNTRY_CODE:-'FR'}
 AP_IP=${ARG_AP_IP:-'192.168.10.1'}
@@ -183,7 +184,6 @@ if [[ $(dpkg -l | grep -c dnsmasq) == 0 ]]; then
     apt -y install dhcpcd
     apt -y install hostapd
     apt -y install dnsmasq
-    sudo mkdir /etc/hostapd/hostapd.conf
 fi
 
 if test true != "${STA_ONLY}"; then
