@@ -183,6 +183,7 @@ if [[ $(dpkg -l | grep -c dnsmasq) == 0 ]]; then
     apt -y install dhcpcd
     apt -y install hostapd
     apt -y install dnsmasq
+    sudo mkdir /etc/hostapd/hostapd.conf
 fi
 
 if test true != "${STA_ONLY}"; then
