@@ -2,12 +2,18 @@
 
 ###### Special thanks to: https://albeec13.github.io/2017/09/26/raspberry-pi-zero-w-simultaneous-ap-and-managed-mode-wifi/
 
+###### Special thanks to: https://github.com/lukicdarkoo/rpi-wifi
+
+###### Special thanks to: https://https://github.com/MkLHX/AP_STA_RPI_SAME_WIFI_CHIP
+
 ###### This repo was forked from https://github.com/lukicdarkoo/rpi-wifi
 
-## About
-This repo was forked from https://github.com/lukicdarkoo/rpi-wifi. This fork logs the settings and steps that worked for a Raspberry Pi Zero W.
 
-- This works on Raspbian Lite 2019-07-12 (buster): https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2019-07-12/
+- This works on Raspberry Pi OS Lite (Legacy): https://www.raspberrypi.com/software/operating-systems/
+  Release date: May 3rd 2023
+  System: 32-bit
+  Kernel version: 5.10
+  Debian version: 10 (buster)
 - After etching buster into a sd card and setting up ssh and wpa_supplicant.conf for remote access, ssh into the PI. In the pi terminal run `sudo apt update`, accept the prompts.
   - Your `wpa_supplicant.conf` file should look like the following:
   
@@ -37,7 +43,6 @@ To run this script, save it as a file with the .sh extension and then run it wit
 
 bash script.sh
 
-
-curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/bullseyePIxT.sh | sudo bash -s -- --ap ap_ssid ap_passphrases --client client_ssid client_passphrase --country US
+  for i in {1..3}; do curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | sudo bash -s -- -a PIxT Andres08 -c Malave Andres08; done
 
 ```
