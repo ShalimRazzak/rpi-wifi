@@ -201,7 +201,7 @@ EOF
 interface=lo,ap@wlan0
 no-dhcp-interface=lo,wlan0
 bind-interfaces
-server=1.1.1.1
+server=8.8.8.8
 domain-needed
 bogus-priv
 dhcp-range=${AP_IP_BEGIN}.50,${AP_IP_BEGIN}.150,12h
