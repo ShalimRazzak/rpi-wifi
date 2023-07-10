@@ -41,6 +41,6 @@ curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | 
 
 Run it with the following command:
 ```
-  for i in {1..3}; do curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/configure | sudo bash -s -- -a MyAP myappass -c WifiSSID wifipass; done
+  for i in {1..3}; do curl https://raw.githubusercontent.com/ShalimRazzak/rpi-wifi/master/PIxT_Config | sudo bash -s -- -a MyAP myappass -c WifiSSID wifipass; done
 
 ```
