@@ -15,13 +15,9 @@
 
 <h2>Environments and Technologies Used</h2>
 - This works on Raspberry Pi OS Lite (Legacy): https://www.raspberrypi.com/software/operating-systems/
-
 Release date: May 3rd 2023
-
 System: 32-bit
-
 Kernel version: 5.10
-
 Debian version: 10 (buster)
 
 - After etching buster into a sd card and setting up ssh and wpa_supplicant.conf for remote access, ssh into the PI. In the pi terminal run `sudo apt update`, accept the prompts.
