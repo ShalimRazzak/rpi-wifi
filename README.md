@@ -11,7 +11,9 @@
 <h2>Video Demonstration</h2>
 
 - ### [YouTube: Raspberry Pi zero w Wifi extender on the same chip How to!!](https://youtu.be/9yh4li--poI)
+  
 
+<h2>Environments and Technologies Used</h2>
 - This works on Raspberry Pi OS Lite (Legacy): https://www.raspberrypi.com/software/operating-systems/
   Release date: May 3rd 2023
   System: 32-bit
