@@ -17,6 +17,7 @@
 - This works on Raspberry Pi OS Lite (Legacy): https://www.raspberrypi.com/software/operating-systems/
 
 ```
+  Raspberry Pi Imager
   Release date: May 3rd 2023
   System: 32-bit
   Kernel version: 5.10
