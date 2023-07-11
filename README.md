@@ -8,6 +8,9 @@
 
 ###### This repo was forked from https://github.com/lukicdarkoo/rpi-wifi
 
+<h2>Video Demonstration</h2>
+
+- ### [YouTube: Raspberry Pi zero w Wifi extender on the same chip How to!!](https://youtu.be/9yh4li--poI)
 
 - This works on Raspberry Pi OS Lite (Legacy): https://www.raspberrypi.com/software/operating-systems/
   Release date: May 3rd 2023
