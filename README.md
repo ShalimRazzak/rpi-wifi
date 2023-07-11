@@ -15,6 +15,7 @@
 
 <h2>Environments and Technologies Used</h2>
 - This works on Raspberry Pi OS Lite (Legacy): https://www.raspberrypi.com/software/operating-systems/
+
 Release date: May 3rd 2023
 System: 32-bit
 Kernel version: 5.10
